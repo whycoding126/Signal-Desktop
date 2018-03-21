@@ -144,7 +144,10 @@
   window.Signal.Backup = require('./js/modules/backup');
   window.Signal.Crypto = require('./js/modules/crypto');
   window.Signal.Logs = require('./js/modules/logs');
+
   window.Signal.Migrations = {};
+  window.Signal.Migrations.V17 = require('./js/modules/migrations/17');
+  window.Signal.Migrations.V18 = require('./js/modules/migrations/18');
   window.Signal.Migrations.loadAttachmentData = Attachment.loadData(readAttachmentData);
   window.Signal.Migrations.deleteAttachmentData = Attachment.deleteData(deleteAttachmentData);
   window.Signal.Migrations.upgradeMessageSchema = upgradeMessageSchema;
@@ -152,7 +155,6 @@
   window.Signal.React = window.Signal.React = {};
   window.Signal.React.MediaGallery = require('./js/built/media_gallery');
 
-  window.Signal.Migrations.V17 = require('./js/modules/migrations/17');
   window.Signal.OS = require('./js/modules/os');
   window.Signal.Types = {};
   window.Signal.Types.Attachment = Attachment;

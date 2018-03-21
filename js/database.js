@@ -252,5 +252,22 @@
         next();
       },
     },
+    {
+      version: 18,
+      async migrate(transaction, next) {
+        console.log('migration 18');
+        console.log('Start migration to database version 18');
+
+        const start = Date.now();
+        await Migrations.V18.run(transaction);
+        const duration = Date.now() - start;
+
+        console.log(
+          'Complete migration to database version 18.',
+          `Duration: ${duration}ms`
+        );
+        next();
+      },
+    },
   ];
 }());

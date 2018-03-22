@@ -1,6 +1,8 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+/* global Backbone: false */
+/* global Whisper: false */
+
+/* eslint-disable */
+
 (function () {
     'use strict';
     window.Whisper = window.Whisper || {};
@@ -93,6 +95,7 @@
                 avatar: this.model.getAvatar(),
                 expireTimer: this.model.get('expireTimer'),
                 'show-members'    : i18n('showMembers'),
+                'viewAllMedia'    : i18n('viewAllMedia'),
                 'end-session'     : i18n('resetSession'),
                 'show-identity'   : i18n('showSafetyNumber'),
                 'destroy'         : i18n('deleteMessages'),
@@ -187,6 +190,7 @@
             'click .update-group': 'newGroupUpdate',
             'click .show-identity': 'showSafetyNumber',
             'click .show-members': 'showMembers',
+            'click .view-all-media': 'viewAllMedia',
             'click .conversation-menu .hamburger': 'toggleMenu',
             'click' : 'onClick',
             'click .bottom-bar': 'focusMessageField',
@@ -789,6 +793,64 @@
 
             this.listenBack(view);
         },
+
+    /* eslint-enable */
+    /* jshint ignore:start */
+    viewAllMedia() {
+      // We have to do this manually, since our React component will not propagate click
+      //   events up to its parent elements in the DOM.
+      this.closeMenu();
+
+      const ReactWrapper = Backbone.View.extend({
+        initialize(options) {
+          const { Component, props, onClose } = options;
+          this.render();
+          this.onClose = onClose;
+
+          const updatedProps = Object.assign({}, props, {
+            close: () => {
+              if (onClose) {
+                onClose();
+                return;
+              }
+              this.remove();
+            },
+          });
+
+          const element = window.React.createElement(Component, updatedProps);
+          window.ReactDOM.render(element, this.el);
+        },
+        remove() {
+          window.ReactDOM.unmountComponentAtNode(this.el);
+          Backbone.View.prototype.remove.call(this);
+        },
+      });
+
+      // Next:
+      //   pull latest media
+      //   need a way for react component to request further data
+
+      //   needed components:
+      //     GalleryPanel
+      //     Section - header, list of thumbnails
+      //     Thumbnail
+      //     Lightbox - or do we use the lightbox already in the app?
+
+      const Component = window.Signal.React.Test;
+      const props = {
+        number: 10,
+      };
+
+      const view = new ReactWrapper({
+        Component,
+        props,
+        onClose: this.resetPanel.bind(this),
+      });
+
+      this.listenBack(view);
+    },
+    /* eslint-disable */
+    /* jshint ignore:end */
 
         showSafetyNumber: function(e, model) {
             if (!model && this.model.isPrivate()) {

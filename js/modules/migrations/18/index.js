@@ -1,11 +1,11 @@
-const { isImage, isVideo } = require('../../types/mime');
+const { addMediaAnnotations } = require('../../types/message');
 
 
 exports.run = async (transaction) => {
   const messagesStore = transaction.objectStore('messages');
 
   console.log('Adding media annotations');
-  const numUpgradedMessages = await _addMediaAnnotations(messagesStore);
+  const numUpgradedMessages = await updateAllMessages(messagesStore);
   console.log('Completed pass across all messages', { numUpgradedMessages });
 
   console.log('Create indices to search for visual media and other media');
@@ -21,7 +21,7 @@ exports.run = async (transaction) => {
   );
 };
 
-function _addMediaAnnotations(messagesStore) {
+function updateAllMessages(messagesStore) {
   return new Promise((resolve, reject) => {
     const putOperations = [];
 
@@ -35,7 +35,7 @@ function _addMediaAnnotations(messagesStore) {
       }
 
       const message = cursor.value;
-      const annotatedMessage = _addMediaAnnotation(message);
+      const annotatedMessage = addMediaAnnotations(message);
       if (message !== annotatedMessage) {
         putOperations.push(putItem(
           messagesStore,
@@ -50,27 +50,6 @@ function _addMediaAnnotations(messagesStore) {
     cursorRequest.onerror = event =>
       reject(event.target.error);
   });
-}
-
-//       _addMediaAnnotation :: Message -> Message
-function _addMediaAnnotation(message) {
-  let result = message;
-  const attachments = message.attachments || [];
-
-  for (let i = 0, max = attachments.length; i < max; i += 1) {
-    const attachment = attachments[i];
-    const mimeType = attachment.contentType || '';
-
-    // We set these keys as 1 instead of true because IndexedDB doesn't allow you to
-    //   index on a boolean key.
-    if (isImage(mimeType) || isVideo(mimeType)) {
-      result = Object.assign({}, result, { visualMedia: 1 });
-    } else {
-      result = Object.assign({}, result, { otherMedia: 1 });
-    }
-  }
-
-  return result;
 }
 
 //       putItem :: IDBObjectStore -> Item -> Key -> Promise Item

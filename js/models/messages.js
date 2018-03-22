@@ -442,6 +442,7 @@
                             message.set({group_update: group_update});
                         }
                     }
+
                     message.set(window.Signal.Types.Message.addMediaAnnotations({
                         schemaVersion  : dataMessage.schemaVersion,
                         body           : dataMessage.body,
@@ -451,6 +452,7 @@
                         flags          : dataMessage.flags,
                         errors         : []
                     }));
+
                     if (type === 'outgoing') {
                         var receipts = Whisper.DeliveryReceipts.forMessage(conversation, message);
                         receipts.forEach(function(receipt) {

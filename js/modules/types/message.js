@@ -3,6 +3,7 @@ const isFunction = require('lodash/isFunction');
 const Attachment = require('./attachment');
 const Errors = require('./errors');
 const SchemaVersion = require('./schema_version');
+const { isImage, isVideo } = require('./mime');
 
 
 const GROUP = 'group';
@@ -73,6 +74,27 @@ exports.initializeSchemaVersion = (message) => {
   );
 
   return messageWithInitialSchema;
+};
+
+//      addMediaAnnotations :: Message -> Message
+exports.addMediaAnnotations = (message) => {
+  let result = message;
+  const attachments = message.attachments || [];
+
+  for (let i = 0, max = attachments.length; i < max; i += 1) {
+    const attachment = attachments[i];
+    const mimeType = attachment.contentType || '';
+
+    // We set these keys as 1 instead of true because IndexedDB doesn't allow you to
+    //   index on a boolean key.
+    if (isImage(mimeType) || isVideo(mimeType)) {
+      result = Object.assign({}, result, { visualMedia: 1 });
+    } else {
+      result = Object.assign({}, result, { otherMedia: 1 });
+    }
+  }
+
+  return result;
 };
 
 // Middleware

@@ -5,23 +5,26 @@ const { LoadingWidget } = require('./loading_widget');
 const { message: messageType } = require('./types/message');
 
 
-function DocumentListEntry({ message }) {
-  const { attachments } = message;
-  const attachment = attachments[0];
+class DocumentListEntry extends React.Component {
+  renderContent() {
+    const { message } = this.props;
+    const { attachments } = message;
+    const attachment = attachments[0];
 
-  if (!attachment.data) {
+    if (!attachment.data) {
+      return <LoadingWidget />;
+    }
+
+    return <div>{attachment.fileName}</div>;
+  }
+
+  render() {
     return (
       <div className="document-list-entry">
-        <LoadingWidget />
+        {this.renderContent()}
       </div>
     );
   }
-
-  return (
-    <div className="document-list-entry">
-      {attachment.fileName}
-    </div>
-  );
 }
 
 DocumentListEntry.propTypes = {

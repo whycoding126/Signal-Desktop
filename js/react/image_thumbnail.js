@@ -1,29 +1,39 @@
 const React = require('react');
+const PropTypes = require('prop-types');
 
 const { LoadingWidget } = require('./loading_widget');
 
 const { message: messageType } = require('./types/message');
 
 
-function ImageThumbnail({ message }) {
-  if (!message.imageUrl) {
+class ImageThumbnail extends React.Component {
+  renderContent() {
+    const { i18n, message } = this.props;
+
+    if (!message.imageUrl) {
+      return <LoadingWidget />;
+    }
+
     return (
-      <div className="image-thumbnail">
-        <LoadingWidget />
-      </div>
+      <img
+        src={message.imageUrl}
+        alt={`${i18n('messageCaption')}: ${message.body}`}
+      />
     );
   }
 
-
-  return (
-    <div className="image-thumbnail">
-      <img src={message.imageUrl} />
-    </div>
-  );
+  render() {
+    return (
+      <div className="image-thumbnail">
+        {this.renderContent()}
+      </div>
+    );
+  }
 }
 
 ImageThumbnail.propTypes = {
   message: messageType.isRequired,
+  i18n: PropTypes.func.isRequired,
 };
 
 module.exports = { ImageThumbnail };

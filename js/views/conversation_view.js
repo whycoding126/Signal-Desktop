@@ -817,6 +817,7 @@
               }
               this.remove();
             },
+            i18n: window.i18n,
           });
 
           const element = window.React.createElement(Component, updatedProps);

@@ -442,7 +442,7 @@
                             message.set({group_update: group_update});
                         }
                     }
-                    message.set({
+                    message.set(window.Signal.Types.Message.addMediaAnnotations({
                         schemaVersion  : dataMessage.schemaVersion,
                         body           : dataMessage.body,
                         conversationId : conversation.id,
@@ -450,7 +450,7 @@
                         decrypted_at   : now,
                         flags          : dataMessage.flags,
                         errors         : []
-                    });
+                    }));
                     if (type === 'outgoing') {
                         var receipts = Whisper.DeliveryReceipts.forMessage(conversation, message);
                         receipts.forEach(function(receipt) {

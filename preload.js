@@ -150,7 +150,7 @@
   window.Signal.Migrations.upgradeMessageSchema = upgradeMessageSchema;
 
   window.Signal.React = window.Signal.React = {};
-  window.Signal.React.Test = require('./js/built/test');
+  window.Signal.React.MediaGallery = require('./js/built/media_gallery');
 
   window.Signal.Migrations.V17 = require('./js/modules/migrations/17');
   window.Signal.OS = require('./js/modules/os');

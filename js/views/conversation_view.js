@@ -1,5 +1,6 @@
 /* global Backbone: false */
 /* global Whisper: false */
+/* global _: false */
 
 /* eslint-disable */
 
@@ -802,6 +803,7 @@
       this.closeMenu();
 
       const ReactWrapper = Backbone.View.extend({
+        className: 'react-wrapper',
         initialize(options) {
           const { Component, props, onClose } = options;
           this.render();
@@ -836,9 +838,52 @@
       //     Thumbnail
       //     Lightbox - or do we use the lightbox already in the app?
 
-      const Component = window.Signal.React.Test;
+      const { isImage, isVideo } = window.Signal.Types.MIME;
+
+      function stripModels(models) {
+        return models.map(model => Object.assign({}, model.attributes, {
+          imageUrl: model.imageUrl,
+        }));
+      }
+
+      // const { Attachment } = window.Signal.Types;
+      // const { context: migrationContext } = window.Signal.Migrations;
+      // const loadData = Attachment.loadData(migrationContext.readAttachmentData);
+      // await loadData(attachment);
+
+      function loadAttachments(models) {
+        return models.forEach((model) => {
+          // loadData
+
+          if (model.imageUrl) {
+            return;
+          }
+
+          model.updateImageUrl();
+        });
+      }
+
+      loadAttachments(this.model.messageCollection);
+
+      const media = stripModels(this.model.messageCollection.filter((message) => {
+        const attachments = message.get('attachments');
+        return _.some(attachments, (attachment) => {
+          const { contentType } = attachment;
+          return isImage(contentType) || isVideo(contentType);
+        });
+      }));
+      const documents = stripModels(this.model.messageCollection.filter((message) => {
+        const attachments = message.get('attachments');
+        return _.some(attachments, (attachment) => {
+          const { contentType } = attachment;
+          return !isImage(contentType) && !isVideo(contentType);
+        });
+      }));
+
+      const Component = window.Signal.React.MediaGallery;
       const props = {
-        number: 10,
+        media,
+        documents,
       };
 
       const view = new ReactWrapper({

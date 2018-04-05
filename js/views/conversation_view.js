@@ -807,37 +807,34 @@
         initialize(options) {
           const { Component, props, onClose } = options;
           this.render();
+
+          this.Component = Component;
           this.onClose = onClose;
 
-          const updatedProps = Object.assign({}, props, {
+          this.update(props);
+        },
+        update(props) {
+          const updatedProps = this.augmentProps(props);
+          const element = window.React.createElement(this.Component, updatedProps);
+          window.ReactDOM.render(element, this.el);
+        },
+        augmentProps(props) {
+          return Object.assign({}, props, {
             close: () => {
-              if (onClose) {
-                onClose();
+              if (this.onClose) {
+                this.onClose();
                 return;
               }
               this.remove();
             },
             i18n: window.i18n,
           });
-
-          const element = window.React.createElement(Component, updatedProps);
-          window.ReactDOM.render(element, this.el);
         },
         remove() {
           window.ReactDOM.unmountComponentAtNode(this.el);
           Backbone.View.prototype.remove.call(this);
         },
       });
-
-      // Next:
-      //   pull latest media
-      //   need a way for react component to request further data
-
-      //   needed components:
-      //     GalleryPanel
-      //     Section - header, list of thumbnails
-      //     Thumbnail
-      //     Lightbox - or do we use the lightbox already in the app?
 
       const { isImage, isVideo } = window.Signal.Types.MIME;
 
@@ -847,51 +844,75 @@
         }));
       }
 
-      // const { Attachment } = window.Signal.Types;
-      // const { context: migrationContext } = window.Signal.Migrations;
-      // const loadData = Attachment.loadData(migrationContext.readAttachmentData);
-      // await loadData(attachment);
+      function splitAttachments(models) {
+        const media = stripModels(models.filter((message) => {
+          const attachments = message.get('attachments');
+          return _.some(attachments, (attachment) => {
+            const { contentType } = attachment;
+            return isImage(contentType) || isVideo(contentType);
+          });
+        }));
+        const documents = stripModels(models.filter((message) => {
+          const attachments = message.get('attachments');
+          return _.some(attachments, (attachment) => {
+            const { contentType } = attachment;
+            return !isImage(contentType) && !isVideo(contentType);
+          });
+        }));
+
+        return {
+          media,
+          documents,
+        };
+      }
+
+      const { loadAttachmentData } = window.Signal.Migrations;
+      const messages = this.model.messageCollection;
+      const messagesWithAttachments = messages.filter((message) => {
+        const attachments = message.get('attachments') || [];
+        return attachments.length > 0;
+      });
+
+      const Component = window.Signal.React.MediaGallery;
+      function getProps() {
+        return splitAttachments(messagesWithAttachments);
+      }
+
+      const view = new ReactWrapper({
+        Component,
+        props: getProps(),
+        onClose: this.resetPanel.bind(this),
+      });
 
       function loadAttachments(models) {
-        return models.forEach((model) => {
-          // loadData
-
+        return models.forEach(async (model) => {
           if (model.imageUrl) {
             return;
           }
 
+          // TODO: can elminiate this code completely once all attachments are on disk
+          const attachment = model.get('attachments')[0];
+          if (!attachment) {
+            return;
+          }
+          if (attachment.data) {
+            model.updateImageUrl();
+            view.update(getProps());
+            return;
+          }
+
+          // TODO: handle multiple attachments
+          const updated = await loadAttachmentData(attachment);
+          model.set({
+            attachments: [updated]
+          });
           model.updateImageUrl();
+
+          view.update(getProps());
         });
       }
 
       loadAttachments(this.model.messageCollection);
-
-      const media = stripModels(this.model.messageCollection.filter((message) => {
-        const attachments = message.get('attachments');
-        return _.some(attachments, (attachment) => {
-          const { contentType } = attachment;
-          return isImage(contentType) || isVideo(contentType);
-        });
-      }));
-      const documents = stripModels(this.model.messageCollection.filter((message) => {
-        const attachments = message.get('attachments');
-        return _.some(attachments, (attachment) => {
-          const { contentType } = attachment;
-          return !isImage(contentType) && !isVideo(contentType);
-        });
-      }));
-
-      const Component = window.Signal.React.MediaGallery;
-      const props = {
-        media,
-        documents,
-      };
-
-      const view = new ReactWrapper({
-        Component,
-        props,
-        onClose: this.resetPanel.bind(this),
-      });
 
       this.listenBack(view);
     },
